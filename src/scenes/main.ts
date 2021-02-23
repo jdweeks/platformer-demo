@@ -2,7 +2,7 @@ import { Image } from "../models/image";
 import { Level } from "../models/level";
 
 export class MainScene extends Phaser.Scene {
-  hero: Phaser.GameObjects.Sprite;
+  hero: Phaser.Types.Physics.Arcade.ImageWithDynamicBody;
   cursors: Phaser.Types.Input.Keyboard.CursorKeys;
 
   constructor() {
@@ -49,7 +49,9 @@ export class MainScene extends Phaser.Scene {
   }
 
   spawnHero(hero: Image): void {
-    this.hero = this.add.sprite(hero.x, hero.y, 'hero').setOrigin(0.5, 0.5);
+    this.hero = this.physics.add.image(hero.x, hero.y, 'hero');
+    this.hero.setOrigin(0.5, 0.5);
+    this.hero.setCollideWorldBounds(true);
   }
 
   handleInput(): void {

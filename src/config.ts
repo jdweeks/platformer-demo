@@ -7,8 +7,16 @@ export const GameConfig: Phaser.Types.Core.GameConfig = {
   height: 600,
   type: Phaser.AUTO,
   parent: 'game',
+  render: {
+      antialias: false,
+      pixelArt: true,
+      roundPixels: true
+  },
   physics: {
-    default: 'arcade'
+    default: 'arcade',
+    arcade: {
+      debug: false
+    }
   },
   scene: [MainScene]
 };
