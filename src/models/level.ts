@@ -1,4 +1,4 @@
-import { Image } from "./image.interface";
+import { Image } from "./image";
 
 export interface Level {
     platforms: Array<Image>,
