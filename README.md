@@ -1,5 +1,5 @@
 # platformer-demo
-Platformer demo for Phaser 3 in TypeScript
+A 2D HTML5 platformer 
 
 ### Credits
-Adapted from https://mozdevs.github.io/html5-games-workshop/en/guides/platformer/start-here/
+Adapted to Phaser 3 / TypeScript from https://mozdevs.github.io/html5-games-workshop/en/guides/platformer/start-here/
