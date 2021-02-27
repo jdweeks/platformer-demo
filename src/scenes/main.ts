@@ -5,6 +5,8 @@ export class MainScene extends Phaser.Scene {
   hero: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody;
   cursors: Phaser.Types.Input.Keyboard.CursorKeys;
   platforms: Phaser.Physics.Arcade.Group;
+  enemyWalls: Phaser.Physics.Arcade.Group;
+  spiders: Phaser.Physics.Arcade.Group;
   coins: Phaser.Physics.Arcade.Group;
 
   constructor() {
@@ -23,6 +25,7 @@ export class MainScene extends Phaser.Scene {
 
   preload(): void {
     this.load.image('background', 'assets/images/background.png');
+    this.load.image('invisible-wall', 'assets/images/invisible_wall.png');
     this.load.image('ground', 'assets/images/ground.png');
     this.load.image('grass:8x1', 'assets/images/grass_8x1.png');
     this.load.image('grass:6x1', 'assets/images/grass_6x1.png');
@@ -32,6 +35,7 @@ export class MainScene extends Phaser.Scene {
     this.load.image('hero', 'assets/images/hero_stopped.png');
 
     this.load.spritesheet('coin', 'assets/images/coin_animated.png', { frameWidth: 22,  frameHeight: 22 });
+    this.load.spritesheet('spider', 'assets/images/spider.png', { frameWidth: 42,  frameHeight: 32 });
 
     this.load.json('level:1', 'assets/data/level01.json')
   }
@@ -40,6 +44,7 @@ export class MainScene extends Phaser.Scene {
     this.add.image(0, 0, 'background').setOrigin(0, 0);
 
     this.loadLevel(this.cache.json.get('level:1'));
+    this.enemyWalls.setVisible(false);
   }
 
   update(): void {
@@ -48,6 +53,8 @@ export class MainScene extends Phaser.Scene {
   }
 
   loadLevel(data: Level): void {
+    this.enemyWalls = this.physics.add.group();
+
     this.platforms = this.physics.add.group();
     for (let platform of data.platforms) {
       this.spawnPlatform(platform);
@@ -58,6 +65,11 @@ export class MainScene extends Phaser.Scene {
     this.coins = this.physics.add.group();
     for (let coin of data.coins) {
       this.spawnCoin(coin);
+    }
+
+    this.spiders = this.physics.add.group();
+    for (let spider of data.spiders) {
+      this.spawnSpider(spider);
     }
   }
 
@@ -82,6 +94,39 @@ export class MainScene extends Phaser.Scene {
     sprite.setOrigin(0, 0);
     sprite.body.setAllowGravity(false);
     sprite.body.setImmovable(true);
+
+    this.spawnEnemyWall(platform.x, platform.y, 'left');
+    this.spawnEnemyWall(platform.x  + sprite.width, platform.y, 'right');
+  }
+
+  spawnEnemyWall(x: number, y: number, side: String) {
+    let sprite: Phaser.Types.Physics.Arcade.ImageWithDynamicBody = this.enemyWalls.create(x, y, 'invisible-wall');
+
+    sprite.setOrigin(side === 'left' ? 1 : 0, 1);
+    sprite.body.setAllowGravity(false);
+    sprite.body.setImmovable(true);
+  }
+
+  spawnSpider(spider: Image): void {
+    let sprite: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody = this.spiders.create(spider.x, spider.y, 'spider');
+
+    sprite.setOrigin(0.5);
+    sprite.anims.create({
+      key: 'crawl',
+      frames: sprite.anims.generateFrameNames('spider', { frames: [0, 1, 2] }),
+      frameRate: 8,
+      repeat: -1
+    });
+    sprite.anims.create({
+      key: 'die',
+      frames: sprite.anims.generateFrameNames('spider', { frames: [0, 4, 0, 4, 0, 4, 3, 3, 3, 3, 3, 3] }),
+      frameRate: 12,
+      repeat: 0
+    });
+    sprite.play('crawl');
+
+    sprite.body.setCollideWorldBounds(true);
+    sprite.body.velocity.x = 100;
   }
 
   spawnHero(hero: Image): void {
@@ -102,9 +147,19 @@ export class MainScene extends Phaser.Scene {
     }
   }
 
+  bounceSpider(spider: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody, object: any): void {
+    if (spider.body.touching.right || spider.body.blocked.right) {
+      spider.body.setVelocityX(-100);
+    }
+    else if (spider.body.touching.left || spider.body.blocked.left) {
+      spider.body.setVelocityX(100);
+    }
+  }
+
   handleCollisions(): void {
     this.physics.collide(this.hero, this.platforms);
-
+    this.physics.collide(this.spiders, this.platforms);
+    this.physics.collide(this.spiders, this.enemyWalls, this.bounceSpider);
     this.physics.overlap(this.hero, this.coins, (hero, coin: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody) => coin.destroy());
   }
 }
