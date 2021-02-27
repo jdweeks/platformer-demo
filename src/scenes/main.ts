@@ -125,8 +125,10 @@ export class MainScene extends Phaser.Scene {
     });
     sprite.play('crawl');
 
-    sprite.body.setCollideWorldBounds(true);
+    sprite.body.setCollideWorldBounds(true, 1, 1, true);
     sprite.body.velocity.x = 100;
+
+    sprite.setName('spider');
   }
 
   spawnHero(hero: Image): void {
@@ -147,19 +149,29 @@ export class MainScene extends Phaser.Scene {
     }
   }
 
-  bounceSpider(spider: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody, object: any): void {
-    if (spider.body.touching.right || spider.body.blocked.right) {
-      spider.body.setVelocityX(-100);
-    }
-    else if (spider.body.touching.left || spider.body.blocked.left) {
-      spider.body.setVelocityX(100);
+  turnSpider(body: Phaser.Physics.Arcade.Body, left: boolean, right: boolean): void {
+    if (body.gameObject.name === 'spider') {
+      if (right) {
+        body.setVelocityX(-100);
+      }
+      else if (left) {
+        body.setVelocityX(100);
+      }
     }
   }
 
   handleCollisions(): void {
     this.physics.collide(this.hero, this.platforms);
     this.physics.collide(this.spiders, this.platforms);
-    this.physics.collide(this.spiders, this.enemyWalls, this.bounceSpider);
+    this.physics.collide(this.spiders, this.enemyWalls, (obj: Phaser.GameObjects.GameObject) => {
+      let body = obj.body as Phaser.Physics.Arcade.Body;
+      let left: boolean = body.blocked.left;
+      let right: boolean = body.blocked.right;
+      this.turnSpider(body, left, right);
+    });
+    this.physics.world.on('worldbounds', (body: Phaser.Physics.Arcade.Body, up: boolean, down: boolean, left: boolean, right: boolean) => {
+      this.turnSpider(body, left, right);
+    });
     this.physics.overlap(this.hero, this.coins, (hero, coin: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody) => coin.destroy());
   }
 }
